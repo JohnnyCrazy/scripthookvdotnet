@@ -72,3 +72,7 @@ $RECYCLE.BIN/
 
 # Mac desktop service store files
 .DS_Store
+
+#NuGet
+/packages/
+!packages/repositories.config

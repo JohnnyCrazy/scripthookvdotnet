@@ -355,17 +355,21 @@ namespace GTA
 	{
 		return Math::Vector3::Subtract(Position, position).Length() < distance;
 	}
-	bool Entity::IsInArea(Math::Vector3 pos1, Math::Vector3 pos2)
+	bool Entity::IsInArea(Math::Vector3 minBounds, Math::Vector3 maxBounds)
 	{
-		return Entity::IsInArea(pos1, pos2, 0);
+		return Native::Function::Call<bool>(Native::Hash::IS_ENTITY_IN_AREA, Handle, minBounds.X, minBounds.Y, minBounds.Z, maxBounds.X, maxBounds.Y, maxBounds.Z);
 	}
 	bool Entity::IsInArea(Math::Vector3 pos1, Math::Vector3 pos2, float angle)
 	{
-		return (Native::Function::Call<bool>(Native::Hash::IS_ENTITY_IN_ANGLED_AREA, Handle, pos1.X, pos1.Y, pos1.Z, pos2.X, pos2.Y, pos2.Z, angle, true, true, true));
+		return Entity::IsInAngledArea(pos1, pos2, angle);
+	}
+	bool Entity::IsInAngledArea(Math::Vector3 Origin, Math::Vector3 Edge, float angle)
+	{
+		return Native::Function::Call<bool>(Native::Hash::IS_ENTITY_IN_ANGLED_AREA, Handle, Origin.X, Origin.Y, Origin.Z, Edge.X, Edge.Y, Edge.Z, angle, false, true, false);
 	}
 	bool Entity::IsNearEntity(Entity^ entity, Math::Vector3 distance)
 	{
-		return (Native::Function::Call<bool>(Native::Hash::IS_ENTITY_AT_ENTITY, Handle, entity->Handle, distance.X, distance.Y, distance.Z, 0, 1, 0));
+		return Native::Function::Call<bool>(Native::Hash::IS_ENTITY_AT_ENTITY, Handle, entity->Handle, distance.X, distance.Y, distance.Z, 0, 1, 0);
 	}
 	bool Entity::IsTouching(Entity ^entity)
 	{
@@ -424,19 +428,27 @@ namespace GTA
 
 	void Entity::ApplyForce(Math::Vector3 direction)
 	{
-		ApplyForce(direction, Math::Vector3::Zero);
+		ApplyForce(direction, Math::Vector3::Zero, ForceType::MaxForceRot2);
 	}
 	void Entity::ApplyForce(Math::Vector3 direction, Math::Vector3 rotation)
 	{
-		Native::Function::Call(Native::Hash::APPLY_FORCE_TO_ENTITY, Handle, 3, direction.X, direction.Y, direction.Z, rotation.X, rotation.Y, rotation.Z, false, false, true, true, false, true);
+		ApplyForce(direction, rotation, ForceType::MaxForceRot2);
+	}
+	void Entity::ApplyForce(Math::Vector3 direction, Math::Vector3 rotation, ForceType forceType)
+	{
+		Native::Function::Call(Native::Hash::APPLY_FORCE_TO_ENTITY, Handle, static_cast<int>(forceType), direction.X, direction.Y, direction.Z, rotation.X, rotation.Y, rotation.Z, false, false, true, true, false, true);
 	}
 	void Entity::ApplyForceRelative(Math::Vector3 direction)
 	{
-		ApplyForceRelative(direction, Math::Vector3::Zero);
+		ApplyForceRelative(direction, Math::Vector3::Zero, ForceType::MaxForceRot2);
 	}
 	void Entity::ApplyForceRelative(Math::Vector3 direction, Math::Vector3 rotation)
 	{
-		Native::Function::Call(Native::Hash::APPLY_FORCE_TO_ENTITY, Handle, 3, direction.X, direction.Y, direction.Z, rotation.X, rotation.Y, rotation.Z, false, true, true, true, false, true);
+		ApplyForceRelative(direction, Rotation, ForceType::MaxForceRot2);
+	}
+	void Entity::ApplyForceRelative(Math::Vector3 direction, Math::Vector3 rotation, ForceType forceType)
+	{
+		Native::Function::Call(Native::Hash::APPLY_FORCE_TO_ENTITY, Handle, static_cast<int>(forceType), direction.X, direction.Y, direction.Z, rotation.X, rotation.Y, rotation.Z, false, true, true, true, false, true);
 	}
 
 	void Entity::ResetAlpha()
@@ -446,7 +458,11 @@ namespace GTA
 
 	Math::Vector3 Entity::GetBoneCoord(int boneIndex)
 	{
-		return Native::Function::Call<Math::Vector3>(Native::Hash::GET_ENTITY_BONE_INDEX_BY_NAME, Handle, boneIndex);
+		return Native::Function::Call<Math::Vector3>(Native::Hash::_GET_ENTITY_BONE_COORDS, Handle, boneIndex);
+	}
+	Math::Vector3 Entity::GetBoneCoord(System::String ^boneName)
+	{
+		return Native::Function::Call<Math::Vector3>(Native::Hash::_GET_ENTITY_BONE_COORDS, Handle, GetBoneIndex(boneName));
 	}
 	int Entity::GetBoneIndex(System::String ^boneName)
 	{
